@@ -47,6 +47,19 @@ Saturday Clinic for the Uninsured
    confirmation.
 4. Click **Clear** to reset for the next patient.
 
+## Batch printing (Batch tab)
+
+The **Batch** tab prints labels for many patients at once.
+
+1. Go to the **Batch** tab.
+2. Type or paste one patient per row under the headers: **Last Name, First Name, DOB,
+   Sex, Date, # Labels**. (Date blank = today; # Labels blank = 1.)
+3. Click **PRINT ALL LABELS**. It shows a "print X labels for Y patients?" confirmation
+   (and flags any incomplete rows, which it skips), then prints them all.
+4. **Clear List** empties the table.
+
+Batch labels use the exact same layout and print settings as the single-label tab.
+
 ## Important: printer / label-size note
 
 The clinic's Brother QL‑1100 driver can get "stuck" reporting the larger
@@ -73,6 +86,9 @@ placement.
 | `ClearForm` | Clears the input cells and resets the date to today. |
 | `SetupSheet` | One-time builder: lays out the sheet, dropdown, buttons, and page setup. |
 | `Workbook_Open` | Sets the Date field to today's date whenever the file is opened. |
+| `PrintBatch` | Reads the Batch tab, confirms the total, and prints every patient's labels. |
+| `ClearBatch` | Empties the Batch tab's list. |
+| `SetupBatch` | One-time builder for the Batch tab (table, dropdown, buttons). |
 
 The label preview cells (E3:E7) are live formulas that reference the input cells, so
 the preview and the printout always match.
@@ -91,6 +107,7 @@ the preview and the printout always match.
 - `Lab Label Printer.xlsm` — the workbook (this is the whole tool).
 - `README.md` — this file.
 - `HANDOFF.md` — a fuller handoff/maintenance guide.
+- `BatchPrint.bas` — text export of the Batch-tab VBA (source backup for version control).
 
 ---
 
