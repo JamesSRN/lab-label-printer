@@ -266,6 +266,61 @@ Open with **Developer → Visual Basic** or `Alt+F11`. Code lives in **Module1**
 - Maintained by: _(add name/role)_
 - Questions or changes: _(add contact)_
 
+## 10. Planned enhancement — automatic printer selection (not yet built)
+
+**Goal:** print correctly whether the **QL‑820NWBc (Bluetooth)** or the **QL‑1100 (USB)** is
+connected, without the volunteer picking a printer in File → Print:
+
+- Only one connected → use it automatically.
+- Both connected → ask which one.
+- Neither → a clear "no label printer connected" message.
+
+Today the tool prints to Windows' active/default printer and the confirm dialog shows which
+one; this enhancement would automate the choice.
+
+### Suggested design
+Add a module **`PrinterSelect.bas`** with one entry point the print code calls:
+
+- `SetChosenPrinter() As Boolean` — picks the target printer, sets
+  `Application.ActivePrinter`, and returns `False` if none is available or the user cancels.
+
+Internally:
+
+1. **List candidates** by name match — a printer name containing `"QL-820"` → label
+   "Brother QL‑820NWBc (Bluetooth)"; `"QL-1100"` → "Brother QL‑1100 (USB)".
+2. **Get each one's ActivePrinter string.** Excel needs the exact `"Name on Port:"` form
+   (e.g. `Brother QL-1100 on USB001:`). Read it from the registry key
+   `HKCU\Software\Microsoft\Windows NT\CurrentVersion\Devices` — each value name is a printer
+   name, its data is `winspool,<port>`. Enumerate with WMI `StdRegProv` (`EnumValues` +
+   `GetStringValue`) and build `name & " on " & port`.
+3. **Check availability** via WMI `Win32_Printer`: treat a printer as available when
+   `WorkOffline = False` **and** `PrinterStatus <> 7` (7 = offline). That reflects the
+   Bluetooth 820 being in range / the USB 1100 being plugged in.
+4. **Decide:**
+   - 0 available → `MsgBox` "No label printer is connected. Turn on the 820 (Bluetooth in
+     range) or connect the 1100 by USB, then try again." → return `False`.
+   - 1 available → set `Application.ActivePrinter` to it → return `True`.
+   - 2 available → `MsgBox …, vbYesNoCancel` "Which printer?  Yes = 820 (Bluetooth),
+     No = QL‑1100 (USB)"; map Yes/No to the two, Cancel → return `False`.
+
+### Where to wire it in
+- **`PrintLabels` (Module1):** insert `If Not SetChosenPrinter Then Exit Sub` just before the
+  confirmation dialog (the block beginning `Dim msg As String`). Then the confirm dialog's
+  "Printer: …" line already shows the chosen printer.
+- **`PrintBatch` (BatchPrint):** call `SetChosenPrinter` **once before** the print loop (ask
+  once for the whole batch); `Exit Sub` if it returns `False`.
+
+### Caveats / test notes
+- `WorkOffline` is the best signal VBA can read but isn't perfect; if it ever picks an
+  unreachable printer, the existing `PrintErr` handler still catches the failure with a clear
+  message, so it degrades safely.
+- Duplicate/stale printer entries (see §3b) can create more than one `"QL-820…"` match — take
+  the first available one, and clean up dead duplicates in Windows.
+- This is plain VBA (WMI + a registry read); it does **not** need "Trust access to the VBA
+  project object model" at runtime.
+- After building, export `PrinterSelect.bas` and re-export `Module1.bas` / `BatchPrint.bas`
+  so the repo's text sources stay in sync with the `.xlsm`.
+
 ---
 
 *This tool stores no patient data. Any values in the input cells are cleared with the
