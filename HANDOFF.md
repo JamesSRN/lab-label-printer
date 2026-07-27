@@ -143,6 +143,43 @@ DK‑1201 and label widths up to 62 mm). To move the tool to another QL printer:
 3. Confirm the **File → Print** preview: one page, text on the left, SCU emblem on the
    right next to the top lines.
 
+## 3b. Setting up the QL‑820NWBc over Bluetooth (Windows)
+
+The 820NWBc can print over Bluetooth from Windows, but **only** if you install Brother's own
+driver with the Bluetooth option — Windows' generic pairing creates a device with **no
+working print queue** ("Driver unavailable"), which never prints. What worked:
+
+1. On the printer, turn Bluetooth on: **Menu → Bluetooth → Bluetooth (On/Off) → On**. Its
+   Bluetooth name is the model + 4 digits, e.g. **QL‑820NWB3827**.
+2. If Windows already auto‑paired it (Settings → Bluetooth & devices → Devices shows it),
+   **remove that pairing first** — Brother's installer skips already‑paired devices, so it
+   won't show in the installer's list until you remove it.
+3. Run Brother's **Software/Document Installer**, choose **Bluetooth Connection**, pick the
+   printer from the list, and confirm the pass‑key **on the printer's LCD** when prompted.
+4. **Restart the PC and power‑cycle the printer** if the queue flaps between Idle/Error.
+5. Confirm **Settings → Printers & scanners → Brother QL‑820NWB** shows **"Idle."**
+
+Windows often lists the 820 more than once (one entry per connection it has seen — Bluetooth
+vs. network). Keep the one with a real driver that shows "Idle"; the extras are harmless
+clutter you can remove.
+
+### Non‑Brother rolls & the black/red media type
+The clinic uses **non‑Brother rolls**, which have no spool sensor, so the printer can't
+reliably auto‑detect the label. Two consequences:
+
+- **Set the media manually** in the driver's **Printing preferences** — a fixed paper size
+  and **black‑only** (not the 2‑color black/red mode). If the driver guesses "black/red"
+  while a black roll is loaded, you get a media‑mismatch error.
+- The **placement toggle** (Section 3, buttons on the **Developer** sheet) exists precisely
+  because detection is unreliable: use **Small roll** when the driver reads the small label,
+  or **Large / corner** when it's stuck on the big size. Both print onto the small roll.
+
+### If a label prints blank
+The QL‑820NWBc is **direct thermal** — no ink or ribbon; it marks heat‑sensitive paper. A
+blank label almost always means the **roll is loaded upside‑down** (the heat‑sensitive side
+must face the print head) or the labels **aren't direct‑thermal stock**. Flip/reload the
+roll, or raise the **print density** in Printing preferences.
+
 ## 4. How the workbook is built (cell map)
 
 Everything lives on one sheet named **Labels**.
@@ -183,6 +220,10 @@ Open with **Developer → Visual Basic** or `Alt+F11`. Code lives in **Module1**
 | `PrintBatch` | BatchPrint | Reads the Batch tab (rows 6–105), validates each row, confirms the total, then prints every patient by feeding each row into the Labels sheet and printing. Restores the Labels inputs afterward. |
 | `ClearBatch` | BatchPrint | Clears the Batch tab list (B6:G105). |
 | `SetupBatch` | BatchPrint | One-time builder for the Batch tab (table, Sex dropdown, buttons). |
+| `UseSmallLabel` | LabelSize | Sets the Labels page layout for when the printer detects the small roll (centered, fit to one label). Wired to the green **Small roll** button on the Developer sheet. |
+| `UseLargeLabel` | LabelSize | Sets the top‑left "corner" layout for when the driver is stuck on the big 2.4×3.9 size. Wired to the blue **Large / corner** button. |
+| `SetupLabelToggle` | LabelSize | One-time builder for the **Developer** sheet (the two placement buttons + mode readout). Also clears the old buttons/status off the Labels sheet. |
+| `AddEmblem` | EmblemSetup | One-time: (re)places the SCU emblem on the right of the label and extends the print area to include it. |
 
 > Note: `SetupSheet` resets page setup to landscape/top-left/100% but does **not** set the
 > paper size (Excel can't pick the Brother custom size by name in code). If you ever
