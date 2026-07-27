@@ -83,6 +83,28 @@ Because centering is off and scaling is 100%, the label prints in the **top-left
 of the 2.4" × 3.9" area — which is exactly where the smaller DK‑1201 label sits. Result:
 no mismatch error, and the text prints correctly on the small labels.
 
+### The placement toggle (buttons on the Labels sheet)
+Because the clinic uses **non‑Brother rolls** (which have no spool sensor), the printer
+can't reliably auto‑detect the loaded label, so the driver sometimes stays stuck on the
+big 2.4" × 3.9" size and sometimes reads the small roll correctly. To handle both without
+editing code, the Labels sheet has two buttons that only change **where the content is
+placed** — they never change the driver's paper size, and they **always print onto the
+small lab roll**:
+
+| Button | Use when… | What it does |
+|---|---|---|
+| **Small label** | the printer correctly detects the small roll | centers the content to fill the small label (no size mismatch) |
+| **Large (corner)** | the driver is stuck thinking a big 2.4 × 3.9" label is loaded | keeps the big page and drops the content in the **top‑left corner**, so it still lands cleanly on the small roll (avoids the mismatch error) |
+
+A status line just above the buttons shows which mode is active. The code lives in the
+**LabelSize** module (`LabelSize.bas`), and the size/margin numbers for each mode are
+plain constants at the top of that module — edit them to tune for a different roll. To
+(re)create the buttons, run `SetupLabelToggle`.
+
+> Note: this is a **placement** toggle only. It does not — and cannot — change the Brother
+> driver's paper size or its black‑only vs. black/red media type; those are set once in the
+> printer driver's **Printing preferences** (see §3b).
+
 ### If the mismatch error comes back
 It usually means the roll was swapped and the driver re-detected a different size.
 1. Make sure the **DK‑1201** roll is loaded and the printer is on/connected.

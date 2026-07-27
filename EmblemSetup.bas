@@ -20,11 +20,12 @@ Public Sub AddEmblem()
     Set rng = ws.Range("E3:E6")
 
     Dim w As Single, h As Single
-    h = 32                      ' ~0.44" tall (small)
+    h = 46                      ' ~0.64" tall (bigger)
     w = h * 1024 / 683          ' keep the emblem's native aspect ratio
 
     Dim L As Single, T As Single
-    L = ws.Range("E7").Left + ws.Range("E7").Width - w - 3   ' right edge
+    ' shift right so the emblem sits toward column F (print area extended below)
+    L = ws.Range("E7").Left + ws.Range("E7").Width - w + 14
     T = rng.Top + (rng.Height - h) / 2                       ' centered over rows 3-6
 
     Dim imgPath As String
@@ -37,7 +38,6 @@ Public Sub AddEmblem()
     pic.Name = "SCUEmblem"
     pic.Placement = xlMoveAndSize
 
-    ws.PageSetup.PrintArea = "$E$3:$E$7"
-
-    MsgBox "Emblem added.", vbInformation
+    ' include column F so the shifted emblem still prints
+    ws.PageSetup.PrintArea = "$E$3:$F$7"
 End Sub
