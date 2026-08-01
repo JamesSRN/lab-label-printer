@@ -3,8 +3,15 @@ Option Explicit
 
 Public Sub PrintBatch()
     Dim wsB As Worksheet, wsL As Worksheet
+    On Error Resume Next
     Set wsB = ThisWorkbook.Worksheets("Batch")
     Set wsL = ThisWorkbook.Worksheets("Labels")
+    On Error GoTo 0
+    If wsB Is Nothing Or wsL Is Nothing Then
+        MsgBox "Can't find the Batch and/or Labels sheet." & vbCrLf & _
+               "Re-run SetupBatch / SetupSheet to rebuild them.", vbExclamation, "Setup needed"
+        Exit Sub
+    End If
 
     Const firstRow As Long = 6
     Dim lastRow As Long
@@ -102,11 +109,18 @@ PrintErr:
     Application.ScreenUpdating = True
     wsL.Range("C3").Value = s3: wsL.Range("C4").Value = s4: wsL.Range("C5").Value = s5
     wsL.Range("C6").Value = s6: wsL.Range("C7").Value = s7
-    MsgBox "Printing stopped due to an error." & vbCrLf & Err.Description, vbCritical, "Print error"
+    MsgBox "Printing stopped due to an error." & vbCrLf & vbCrLf & _
+           "Check the printer is on/connected, the roll is loaded correctly (thermal side up), " & _
+           "and the driver's media type matches the roll." & vbCrLf & vbCrLf & _
+           "Details: " & Err.Description, vbCritical, "Print error"
 End Sub
 
 Public Sub ClearBatch()
-    ThisWorkbook.Worksheets("Batch").Range("B6:G105").ClearContents
+    On Error Resume Next
+    Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Batch")
+    On Error GoTo 0
+    If ws Is Nothing Then Exit Sub
+    ws.Range("B6:G105").ClearContents
 End Sub
 
 Public Sub SetupBatch()
@@ -178,7 +192,9 @@ Public Sub SetupBatch()
     btnC.Caption = "Clear List"
 
     Application.ScreenUpdating = True
-    ws.Activate
-    ws.Range("B6").Select
-    MsgBox "Batch tab ready.", vbInformation
+    If Not gBuilding Then
+        ws.Activate
+        ws.Range("B6").Select
+        MsgBox "Batch tab ready.", vbInformation
+    End If
 End Sub

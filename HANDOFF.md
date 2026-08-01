@@ -197,7 +197,7 @@ Everything lives on one sheet named **Labels**.
 The preview cells are formulas, so the preview always matches what prints:
 
 ```
-E3  =IF(C4="","Name: "&C3,"Name: "&C3&", "&C4)
+E3  =IF(C4="",C3,C3&", "&C4)     (name only, no "Name:" prefix)
 E4  ="DOB: "&IF(ISNUMBER(C5),TEXT(C5,"mm/dd/yyyy"),C5)
 E5  ="Sex: "&C6
 E6  ="Date: "&IF(ISNUMBER(C7),TEXT(C7,"m/d/yyyy"),C7)     (bold)

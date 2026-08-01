@@ -1,6 +1,28 @@
 Attribute VB_Name = "Module1"
 Option Explicit
 
+' Set True by SetupWorkbook so the setup routines rebuild SILENTLY (no pop-ups,
+' no sheet-switching) during an automated Build-Release run. Left False for normal
+' manual use, so running a setup macro by hand still shows its confirmation.
+Public gBuilding As Boolean
+
+' ============================================================
+'  SetupWorkbook - one-shot rebuild used by Build-Release.vbs.
+'  Refreshes every sheet, the emblem, and the Developer controls
+'  from the current code, forces a compile, and leaves the Labels
+'  sheet active. Safe to run anytime to self-heal the workbook.
+' ============================================================
+Public Sub SetupWorkbook()
+    gBuilding = True
+    On Error Resume Next
+    SetupSheet                      ' Labels layout + emblem + Developer controls
+    SetupBatch                      ' Batch tab
+    ThisWorkbook.Worksheets("Labels").Activate
+    ThisWorkbook.Worksheets("Labels").Range("C3").Select
+    On Error GoTo 0
+    gBuilding = False
+End Sub
+
 Public Sub PrintLabels()
     Dim ws As Worksheet
     Set ws = LabelSheet()
@@ -49,7 +71,12 @@ Public Sub PrintLabels()
     ws.PrintOut Copies:=qty, Collate:=True
     Exit Sub
 PrintErr:
-    MsgBox "Could not print." & vbCrLf & "Make sure the label printer is on and selected as the printer." & vbCrLf & vbCrLf & "Details: " & Err.Description, vbCritical, "Print error"
+    MsgBox "Could not print. Please check:" & vbCrLf & _
+           "  - the label printer is on and connected," & vbCrLf & _
+           "  - it is the printer shown in the confirm box," & vbCrLf & _
+           "  - the roll is loaded correctly (thermal side up), and" & vbCrLf & _
+           "  - the driver's media type / size matches the loaded roll." & vbCrLf & vbCrLf & _
+           "Details: " & Err.Description, vbCritical, "Print error"
 End Sub
 
 Public Sub ClearForm()
@@ -68,7 +95,7 @@ Private Function LabelSheet() As Worksheet
 End Function
 
 Private Sub ComposeLabel(ws As Worksheet)
-    ws.Range("E3").Formula = "=IF(C4="""",""Name: ""&C3,""Name: ""&C3&"", ""&C4)"
+    ws.Range("E3").Formula = "=IF(C4="""",C3,C3&"", ""&C4)"
     ws.Range("E4").Formula = "=""DOB: ""&IF(ISNUMBER(C5),TEXT(C5,""mm/dd/yyyy""),C5)"
     ws.Range("E5").Formula = "=""Sex: ""&C6"
     ws.Range("E6").Formula = "=""Date: ""&IF(ISNUMBER(C7),TEXT(C7,""m/d/yyyy""),C7)"
@@ -146,7 +173,7 @@ Public Sub SetupSheet()
     btnC.caption = "Clear"
 
     With ws.PageSetup
-        .PrintArea = "$E$3:$E$7"
+        .PrintArea = "$E$3:$F$7"       ' includes column F for the emblem
         .Orientation = xlLandscape
         .LeftMargin = Application.InchesToPoints(0.06)
         .RightMargin = Application.InchesToPoints(0.06)
@@ -162,7 +189,18 @@ Public Sub SetupSheet()
     End With
 
     Application.ScreenUpdating = True
-    ws.Range("C3").Select
-    MsgBox "Setup complete.", vbInformation
+
+    ' Rebuild the emblem and the Developer-sheet controls too, so SetupSheet is a
+    ' complete one-shot rebuild. Wrapped so it never fails if those modules are absent.
+    On Error Resume Next
+    Application.Run "AddEmblem"
+    Application.Run "SetupLabelToggle"
+    On Error GoTo 0
+
+    ws.Activate
+    If Not gBuilding Then
+        ws.Range("C3").Select
+        MsgBox "Setup complete.", vbInformation
+    End If
 End Sub
 

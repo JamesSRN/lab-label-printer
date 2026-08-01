@@ -69,7 +69,13 @@ End Sub
 Private Sub ApplyProfile(ByVal topIn As Double, ByVal leftIn As Double, _
                          ByVal centerOnPage As Boolean, ByVal fitToOne As Boolean)
     Dim ws As Worksheet
+    On Error Resume Next
     Set ws = ThisWorkbook.Worksheets(SHEET_NAME)
+    On Error GoTo 0
+    If ws Is Nothing Then
+        MsgBox "The '" & SHEET_NAME & "' sheet is missing.", vbExclamation, "Label placement"
+        Exit Sub
+    End If
     Application.ScreenUpdating = False
     With ws.PageSetup
         .PrintArea = ws.Range(PRINT_AREA).Address
@@ -143,7 +149,7 @@ Public Sub SetupLabelToggle()
     dev.Range(STATUS_CELL).Font.Italic = True
 
     UseSmallLabel      ' default to the fit-to-one small mode
-    dev.Activate
+    If Not gBuilding Then dev.Activate
 End Sub
 
 Private Function EnsureDevSheet() As Worksheet
